@@ -33,7 +33,10 @@
 
 #define MISSILE_SIZE 8
 
-
+/**
+ * \brief Vitesse des vaisseaux ennemis
+ */
+#define ENEMY_SPEED 2
 
 /**
  * \brief Représentation pour stocker les textures nécessaires à l'affichage graphique
@@ -42,6 +45,7 @@
 struct textures_s{
     SDL_Texture* background; /*!< Texture liée à l'image du fond de l'écran. */
     SDL_Texture* main_ship; /*!< Texture liée au vaisseau du joueur. */
+    SDL_Texture* enemy_ship; /*!< Texture liée au vaisseau ennemi. */
 };
 
 
@@ -76,6 +80,7 @@ typedef struct sprite_s sprite_t;
 struct world_s{
     int gameover; /*!< Champ indiquant si l'on est à la fin du jeu */
     sprite_t main_ship; /*!< Vaisseau du joueur */
+    sprite_t enemy_ship; /*!< Vaisseau ennemi */
 };
 
 /**
@@ -119,7 +124,9 @@ void init_data(world_t * world){
     //on n'est pas à la fin du jeu
     world->gameover = 0;
     init_sprite(&(world->main_ship), (SCREEN_WIDTH/2-SHIP_SIZE/2),SCREEN_HEIGHT-3*SHIP_SIZE/2,SHIP_SIZE,SHIP_SIZE,10);
-    print_sprite(&(world->main_ship));
+    //print_sprite(&(world->main_ship));
+    init_sprite(&(world->enemy_ship), (SCREEN_WIDTH/2-SHIP_SIZE/2),-SHIP_SIZE,SHIP_SIZE,SHIP_SIZE,ENEMY_SPEED);
+    //print_sprite(&(world->enemy_ship));
 }
 
 
@@ -153,7 +160,7 @@ int is_game_over(world_t *world){
  */
 
 void update_data(world_t *world){
-    /* A COMPLETER */
+    world->enemy_ship.y += ENEMY_SPEED ;
 }
 
 
@@ -187,8 +194,8 @@ void handle_events(SDL_Event *event,world_t *world){
                  printf("La touche D est appuyée\n");
               }
          }
-        print_sprite(&(world->main_ship));
     }
+    //print_sprite(&(world->main_ship));
 }
 
 
@@ -200,6 +207,7 @@ void handle_events(SDL_Event *event,world_t *world){
 void clean_textures(textures_t *textures){
     clean_texture(textures->background);
     clean_texture(textures->main_ship);
+    clean_texture(textures->enemy_ship);
 }
 
 
@@ -213,6 +221,7 @@ void clean_textures(textures_t *textures){
 void  init_textures(SDL_Renderer *renderer, textures_t *textures){
     textures->background = load_image( "ressources/space-background.bmp",renderer);
     textures->main_ship = load_image("ressources/spaceship.bmp", renderer);
+    textures->enemy_ship = load_image("ressources/enemy.bmp", renderer);
 }
 
 
@@ -260,6 +269,7 @@ void refresh_graphics(SDL_Renderer *renderer, world_t *world,textures_t *texture
     //application des textures dans le renderer
     apply_background(renderer, textures);
     apply_sprite(renderer, textures->main_ship, &(world->main_ship));
+    apply_sprite(renderer, textures->enemy_ship, &(world->enemy_ship));
     
     // on met à jour l'écran
     update_screen(renderer);
