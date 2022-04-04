@@ -39,6 +39,11 @@
 #define ENEMY_SPEED 2
 
 /**
+ * \brief Vitesse du missile
+ */
+#define MISSILE_SPEED 10
+
+/**
  * \brief Représentation pour stocker les textures nécessaires à l'affichage graphique
 */
 
@@ -46,6 +51,7 @@ struct textures_s{
     SDL_Texture* background; /*!< Texture liée à l'image du fond de l'écran. */
     SDL_Texture* main_ship; /*!< Texture liée au vaisseau du joueur. */
     SDL_Texture* enemy_ship; /*!< Texture liée au vaisseau ennemi. */
+    SDL_Texture* missile; /*! missile du joueur */
 };
 
 
@@ -66,6 +72,7 @@ struct sprite_s{
     int w; /*!<largeur du sprite */
     int h; /*!<hauteur du sprite */
     int v; /*!< vitesse verticale du sprite */
+    int is_visible; /*!< Permet l'affichage du missile */
 };
 
 /**
@@ -81,6 +88,7 @@ struct world_s{
     int gameover; /*!< Champ indiquant si l'on est à la fin du jeu */
     sprite_t main_ship; /*!< Vaisseau du joueur */
     sprite_t enemy_ship; /*!< Vaisseau ennemi */
+    sprite_t missile; /*!< Missile */
 };
 
 /**
@@ -94,7 +102,7 @@ typedef struct world_s world_t;
  * \param sprite pointeur vers la structure sprite_t du vaisseau du joueur
  */
  void print_sprite(sprite_t * sprite){
-    printf("Abscisse du centre du sprite %d \nOrdonné du centre du sprite %d\nLargeur du sprite %d\nHauteur du sprite %d\nVitesse verticale du sprite %d\n", sprite->x, sprite->y, sprite->h, sprite->w, sprite->v);
+    printf("Abscisse du centre du sprite %d \nOrdonné du centre du sprite %d\nLargeur du sprite %d\nHauteur du sprite %d\nVitesse verticale du sprite %d\nVisibilité du sprite %d\n", sprite->x, sprite->y, sprite->h, sprite->w, sprite->v, sprite->is_visible);
  }
 
 /**
@@ -113,7 +121,24 @@ void init_sprite(sprite_t *sprite, int x, int y, int w, int h, int v){
     sprite->w = w;
     sprite->h = h;
     sprite->v = v;
+    sprite->is_visible = 0;
 }
+
+/**
+ * \brief Rend un sprite visible
+ * \param sprite sprite rendu visible par la fonction
+ **/
+ void set_visible(sprite_t * sprite){
+     sprite->is_visible = 0;
+ }
+
+ /**
+ * \brief Rend un sprite invisible
+ * \param sprite sprite rendu invisible par la fonction
+ **/
+ void set_invisible(sprite_t * sprite){
+     sprite->is_visible = 1;
+ }
 
 /**
  * \brief La fonction initialise les données du monde du jeu
@@ -123,10 +148,12 @@ void init_data(world_t * world){
     
     //on n'est pas à la fin du jeu
     world->gameover = 0;
-    init_sprite(&(world->main_ship), (SCREEN_WIDTH/2-SHIP_SIZE/2),SCREEN_HEIGHT-3*SHIP_SIZE/2,SHIP_SIZE,SHIP_SIZE,10);
+    init_sprite(&(world->main_ship), (SCREEN_WIDTH/2-SHIP_SIZE/2), SCREEN_HEIGHT-3*SHIP_SIZE/2, SHIP_SIZE, SHIP_SIZE, 0);
     //print_sprite(&(world->main_ship));
-    init_sprite(&(world->enemy_ship), (SCREEN_WIDTH/2-SHIP_SIZE/2),-SHIP_SIZE,SHIP_SIZE,SHIP_SIZE,ENEMY_SPEED);
+    init_sprite(&(world->enemy_ship), (SCREEN_WIDTH/2-SHIP_SIZE/2), -SHIP_SIZE, SHIP_SIZE, SHIP_SIZE, ENEMY_SPEED);
     //print_sprite(&(world->enemy_ship));
+    init_sprite(&(world->missile), SCREEN_WIDTH/2-MISSILE_SIZE/2, SCREEN_HEIGHT-1.8*SHIP_SIZE, SHIP_SIZE, SHIP_SIZE, MISSILE_SPEED);
+    set_invisible(&(world->missile));
 }
 
 
@@ -161,6 +188,9 @@ int is_game_over(world_t *world){
 
 void update_data(world_t *world){
     world->enemy_ship.y += ENEMY_SPEED ;
+    if(world->missile.is_visible==0){
+        world->missile.y -= MISSILE_SPEED;
+    }
 }
 
 
@@ -185,13 +215,22 @@ void handle_events(SDL_Event *event,world_t *world){
          if(event->type == SDL_KEYDOWN){
              if(event->key.keysym.sym == SDLK_RIGHT){
                  world->main_ship.x += 8;
+                 world->missile.x += 8;
              }
              if(event->key.keysym.sym == SDLK_LEFT){
                  world->main_ship.x -= 8;
+                 world->missile.x -= 8;
              }
              //si la touche appuyée est 'D'
              if(event->key.keysym.sym == SDLK_d){
                  printf("La touche D est appuyée\n");
+              }
+             if(event->key.keysym.sym == SDLK_SPACE){
+                 set_visible(&(world->missile));
+             }
+             if(event->key.keysym.sym == SDLK_ESCAPE){
+                  printf("La touche ESC est appuyée\n");
+                  world->gameover = 1;
               }
          }
     }
@@ -208,6 +247,7 @@ void clean_textures(textures_t *textures){
     clean_texture(textures->background);
     clean_texture(textures->main_ship);
     clean_texture(textures->enemy_ship);
+    clean_texture(textures->missile);
 }
 
 
@@ -222,6 +262,7 @@ void  init_textures(SDL_Renderer *renderer, textures_t *textures){
     textures->background = load_image( "ressources/space-background.bmp",renderer);
     textures->main_ship = load_image("ressources/spaceship.bmp", renderer);
     textures->enemy_ship = load_image("ressources/enemy.bmp", renderer);
+    textures->missile = load_image("ressources/missile.bmp", renderer);
 }
 
 
@@ -245,12 +286,14 @@ void apply_background(SDL_Renderer *renderer, textures_t *textures){
  * \param sprite structure contenant les informations liés au sprite
 */
 void apply_sprite(SDL_Renderer *renderer, SDL_Texture *texture, sprite_t*sprite){
-    SDL_Rect dst = {0, 0, 0, 0};
+    if(sprite->is_visible == 0){
+        SDL_Rect dst = {0, 0, 0, 0};
     
-    SDL_QueryTexture(texture, NULL, NULL, &dst.w, &dst.h);
-    dst.x = sprite->x; dst.y = sprite->y;
+        SDL_QueryTexture(texture, NULL, NULL, &dst.w, &dst.h);
+        dst.x = sprite->x; dst.y = sprite->y;
     
-    SDL_RenderCopy(renderer, texture, NULL, &dst);
+        SDL_RenderCopy(renderer, texture, NULL, &dst);
+    }
 }
 
 
@@ -270,6 +313,7 @@ void refresh_graphics(SDL_Renderer *renderer, world_t *world,textures_t *texture
     apply_background(renderer, textures);
     apply_sprite(renderer, textures->main_ship, &(world->main_ship));
     apply_sprite(renderer, textures->enemy_ship, &(world->enemy_ship));
+    apply_sprite(renderer, textures->missile, &(world->missile));
     
     // on met à jour l'écran
     update_screen(renderer);
