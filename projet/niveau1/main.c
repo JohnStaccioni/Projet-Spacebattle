@@ -215,11 +215,15 @@ void handle_events(SDL_Event *event,world_t *world){
          if(event->type == SDL_KEYDOWN){
              if(event->key.keysym.sym == SDLK_RIGHT){
                  world->main_ship.x += 8;
-                 world->missile.x += 8;
+                 if(world->missile.is_visible==1){
+                     world->missile.x += 8;
+                 }
              }
              if(event->key.keysym.sym == SDLK_LEFT){
                  world->main_ship.x -= 8;
-                 world->missile.x -= 8;
+                 if(world->missile.is_visible==1){
+                    world->missile.x -= 8;
+                 }
              }
              //si la touche appuyée est 'D'
              if(event->key.keysym.sym == SDLK_d){
