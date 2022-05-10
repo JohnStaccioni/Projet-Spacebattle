@@ -178,13 +178,27 @@ int sprites_collide(sprite_t *sp2, sprite_t *sp1){
 }
 
 /**
+ * @brief Permet de vérifier si un sprite est bien visible dans le champ de l'écran
+ * 
+ * @param sp le sprite dont on vérifie la visibilité
+ * @return \a 1 si le sprite est visible \a 0 sinon
+ */
+int on_the_screen (sprite_t * sp){
+    if(sp->y < SCREEN_HEIGHT & sp->y > 0){
+        return 1;
+    }
+    return 0;
+}
+
+/**
  * @brief Gère la collision de deux sprites, met leur vitesse à 0 et indique qu'ils sont entrés en collision dans la structure des sprites
  * 
  * @param sp2 Le sprite 2 pour lequel on change les paramètres si une collision a lieu
  * @param sp1 Le sprite 1 pour lequel on change les paramètres si une collision a lieu
  */
 void handle_sprites_collision(sprite_t *sp2, sprite_t *sp1){
-    if (sprites_collide(sp2, sp1)==1){
+    //Utiliser la fonction on_the_screen permet de s'assurer que les sprites qui entrent en collisions sont bien dans le champ de l'écran
+    if ((sprites_collide(sp2, sp1)==1) & (on_the_screen(sp1)==1) & (on_the_screen(sp2)==1)){
         sp2->v = 0;
         sp1->v = 0;
         sp2->collided = 1;
@@ -360,13 +374,10 @@ void handle_events(SDL_Event *event,world_t *world){
                  align_missile(&(world->main_ship), &(world->missile)); //aligne le missile sur le sprite du joueur
              }
 
-             //si la touche appuyée est 'D'
-             if(event->key.keysym.sym == SDLK_d){
-                 printf("La touche D est appuyée\n");
-              }
              if((event->key.keysym.sym == SDLK_SPACE)){
                  world->missile.missile_launch = 1; // on active le lancement du missile
              }
+
              if(event->key.keysym.sym == SDLK_ESCAPE){
                   printf("La touche ESC est appuyée\n");
                   world->gameover = 1;

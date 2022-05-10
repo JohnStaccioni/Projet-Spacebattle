@@ -10,6 +10,7 @@
 #include "constante.h"
 #include "structure.h"
 #include "graphics.h"
+#include "controller.h"
 #include "spaceship_data.h"
 
 

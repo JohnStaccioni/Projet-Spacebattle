@@ -1,8 +1,8 @@
 CFLAGS = -O3 `sdl2-config --cflags`
 LDFLAGS = `sdl2-config --libs` -lSDL2_ttf -lm
 
-INC = sdl2-light.h graphics.h spaceship_data.h structure.h constante.h sdl2-ttf-light.h
-SRC = main.c sdl2-light.c graphics.c spaceship_data.c sdl2-ttf-light.c
+INC = sdl2-light.h graphics.h spaceship_data.h structure.h constante.h sdl2-ttf-light.h controller.h
+SRC = main.c sdl2-light.c graphics.c spaceship_data.c sdl2-ttf-light.c controller.c
 OBJ = $(SRC:%.c=%.o)
 
 TEST_INC = spaceship_data.h structure.h constante.h

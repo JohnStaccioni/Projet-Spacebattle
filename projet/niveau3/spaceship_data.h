@@ -26,6 +26,7 @@ int is_game_over(world_t *world);
 void limite_horizontale(world_t *world);
 void limite_verticale(world_t * world);
 int sprites_collide(sprite_t *sp2, sprite_t *sp1);
+int on_the_screen (sprite_t * sp);
 void handle_sprites_collision(sprite_t *sp2, sprite_t *sp1);
 int collided(sprite_t *sp);
 void align_missile(sprite_t * ship, sprite_t * missile);
