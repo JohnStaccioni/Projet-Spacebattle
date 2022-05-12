@@ -1,9 +1,9 @@
 #ifndef __SDL2_TTF_LIGHT__H
 #define __SDL2_TTF_LIGHT__H
 
-#include <SDL2/SDL.h>
+#include  <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-
+#include <stdio.h>
 
 void init_ttf();
 TTF_Font * load_font(const char* path, int font_size);
