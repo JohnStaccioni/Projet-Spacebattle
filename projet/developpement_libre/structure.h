@@ -11,6 +11,7 @@
 
 #include "sdl2-light.h"
 #include "sdl2-ttf-light.h"
+#include "constante.h"
 
 /**
  * \brief Représentation pour stocker les textures nécessaires à l'affichage graphique
@@ -19,10 +20,13 @@
 struct ressources_s{
     SDL_Texture* background; /*!< Texture liée à l'image du fond de l'écran. */
     SDL_Texture* selection_background; /*! Texture liée à l'image en arrière plan de la sélection du joueur dans le menu */
-    SDL_Texture* main_ship; /*!< Texture liée au vaisseau du joueur. */
+    SDL_Texture* main_ship_state3; /*!< Texture liée au vaisseau du joueur. */
+    SDL_Texture* main_ship_state2; /*!< Texture liée au vaisseau du joueur. */
+    SDL_Texture* main_ship_state1; /*!< Texture liée au vaisseau du joueur. */
     SDL_Texture* enemy_ship; /*!< Texture liée au vaisseau ennemi. */
-    SDL_Texture* missile; /*! missile du joueur */
-    TTF_Font* police; /*! police utilisée pour les affichages dans le jeu */
+    SDL_Texture* missile; /*!< missile du joueur */
+    TTF_Font* police; /*!< police utilisée pour les affichages dans le jeu */
+    SDL_Texture* explosions; /*!< Texture liée aux explosions */
 };
 
 /**
@@ -46,12 +50,30 @@ struct sprite_s{
     int is_visible; /*!< Visibilité ou invisibilité du sprite */
     int collided; /*!< Indique si deux sprites sont entrés en collision */
     int missile_launch; /*!< Indique si le missile est lancé */
+    int main_ship_state; /*!< Indique l'état du vaisseau, permet de simuler des dégats sur le vaisseau du joueur */
 };
 
 /**
  * \brief Type qui correspond à sprite_s
  */
 typedef struct sprite_s sprite_t;
+
+
+/**
+ * @brief Structure permettant de gérer les animations
+ * 
+ */
+struct animation_s{
+    int frameNumber; /*!< Champ indiquant le nombre de frame par bmp pour l'animation*/
+    int frameTimer; /*!< Temps entre deux frame */
+    //sprite_t * animation_sprite; /*!< sprite qui contient les informations de l'animation */
+    int x; /*!< abscisse du centre du vaisseau */
+    int y; /*!< ordonné du centre du vaisseau */
+    int w; /*!<largeur du sprite */
+    int h; /*!<hauteur du sprite */
+};
+
+typedef struct animation_s animation_t;
 
 /**
  * \brief Représentation du monde du jeu
@@ -62,12 +84,16 @@ struct world_s{
     int select; /*!< Champ  permettant de gérer le choix sélectionné dans le menu du jeu */
     int menu; /*!< Champ  permettant de gérer les choix dans le menu du jeu */
     int pause; /*!< Champ  permettant de gérer l'état en pause ou non du jeu*/
+    int music_playing; /*!< Champ  permettant de gérer l'état en pause ou non du jeu*/
+    int nb_vie; /*!< Nombre de vie du joueur*/
     sprite_t main_ship; /*!< Vaisseau du joueur */
     sprite_t missile; /*!< Missile */
     sprite_t * enemies; /*!< Vaisseaux ennemis */
     int compteur; /*!< Compteur du nombre de vaisseaux sortis de l'écran */
     int score; /*!< Score du joueur */
     int ending; /*!< Permet d'indiquer le type de fin de jeu */
+    animation_t explosions[NB_EXPLOSIONS_MAX]; /*!< Permet d'inclure des effets d'explosions */
+    int nombre_explosions; /*!< Nombre d'effets d'explosions en cours */
 };
 
 /**

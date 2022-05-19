@@ -21,13 +21,24 @@
 void clean_textures(ressources_t *textures){
     clean_texture(textures->background);
     clean_texture(textures->selection_background);
-    clean_texture(textures->main_ship);
+
+    //On nettoie les différentes textures liés au différents états de dégat du vaisseau du joueur
+    clean_texture(textures->main_ship_state3);
+    clean_texture(textures->main_ship_state2);
+    clean_texture(textures->main_ship_state1);
+    //
+
+
     clean_texture(textures->enemy_ship);
     clean_texture(textures->missile);
     clean_font(textures->police);
+    clean_texture(textures->explosions);
 }
 
 
+/*void apply_background(SDL_Renderer *renderer, ressources_t *textures){
+
+}*/
 /**
  * \brief La fonction initialise les texures
  * \param screen la surface correspondant à l'écran de jeu
@@ -36,10 +47,13 @@ void clean_textures(ressources_t *textures){
 void  init_textures(SDL_Renderer *renderer, ressources_t *textures){
     textures->background = load_image( "ressources/space-background.bmp",renderer);
     textures->selection_background = load_image("ressources/Fond_texte.bmp",renderer);
-    textures->main_ship = load_image("ressources/spaceship.bmp", renderer);
+    textures->main_ship_state3 = load_image("ressources/spaceship.bmp", renderer);
+    textures->main_ship_state2 = load_image("ressources/spaceship_2.bmp", renderer);
+    textures->main_ship_state1 = load_image("ressources/spaceship_1.bmp", renderer);
     textures->enemy_ship = load_image("ressources/enemy.bmp", renderer);
     textures->missile = load_image("ressources/missile.bmp", renderer);
     textures->police = load_font("ressources/arial.ttf",14);
+    textures->explosions = load_image("ressources/explosion.bmp", renderer);
 }
 
 /**
@@ -87,13 +101,3 @@ void apply_enemies(SDL_Renderer *renderer, SDL_Texture *texture, world_t * world
     }
 }
 
-/**
- * @brief COnvertit le score en chaine de caractère afin de permettre son affichage
- * 
- * @return \a score_printing contient le score en chaine de caractères 
- */
-char* score_to_char(int a){
-    char * score_printing = malloc(sizeof(int)*NB_ENEMIES);
-    sprintf(score_printing, "%d", a);
-    return score_printing;
-}

@@ -22,5 +22,6 @@ void init(SDL_Window **window, SDL_Renderer ** renderer, ressources_t *textures,
 void refresh_menu_graphics(SDL_Renderer *renderer, world_t *world,ressources_t *textures);
 void refresh_pause_graphics(SDL_Renderer *renderer, world_t *world,ressources_t *textures);
 void refresh_replay_graphics(SDL_Renderer *renderer, world_t *world,ressources_t *textures);
+void apply_explosions(SDL_Renderer *renderer, world_t *world,ressources_t *textures);
 
 #endif

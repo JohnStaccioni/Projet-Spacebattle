@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "sdl2-ttf-light.h"
+#include "audio.h"
 
 /**
  * @brief Affiche une fin en fonction du scénario de fin stocké dans la structure world
@@ -46,17 +47,30 @@ void refresh_graphics(SDL_Renderer *renderer, world_t *world,ressources_t *textu
     
     //application des textures dans le renderer
     apply_background(renderer, textures);
-    apply_sprite(renderer, textures->main_ship, &(world->main_ship));
+    if(world->nb_vie > 2){ //affichage du vaisseau du joueur en état intact
+        apply_sprite(renderer, textures->main_ship_state3, &(world->main_ship));
+    }
+    if(world->nb_vie==2){ //affichage du vaisseau du joueur en état de dégradation 
+        apply_sprite(renderer, textures->main_ship_state2, &(world->main_ship));
+    }
+    if(world->nb_vie==1){ //affichage du vaisseau du joueur en état de dégradation final
+        apply_sprite(renderer, textures->main_ship_state1, &(world->main_ship));
+    }
     apply_enemies(renderer, textures->enemy_ship, world);
     apply_sprite(renderer, textures->missile, &(world->missile));
 
-    //Affichage du score
+    //Affichage du score et du nombre de vie
     if(!is_game_over(world)){
-        apply_text(renderer, 5, 0, 32, 32,score_to_char(world->score),textures->police);
+        apply_text(renderer, SCREEN_WIDTH - 30, 0, 32, 32,int_to_char(world->score),textures->police); //affichage du score
+        apply_text(renderer, 5 , 0, 32, 32,int_to_char(world->nb_vie),textures->police);
     }
+    
     else{
         print_ending(renderer,world,textures);
     }
+
+    //Gestion des explosions
+    apply_explosions(renderer, world, textures);
 
     // on met à jour l'écran
     update_screen(renderer);
@@ -148,4 +162,66 @@ void refresh_pause_graphics(SDL_Renderer *renderer, world_t *world,ressources_t 
 
     // on met à jour l'écran
     update_screen(renderer);
+}
+
+/**
+ * @brief Permet d'appliquer les explosions quand il y a des collisions
+ * 
+ * @param renderer moteur de rendu
+ * @param world structure contenant les données du monde
+ * @param textures image du sprite 
+ */
+void apply_explosions(SDL_Renderer *renderer, world_t *world,ressources_t *textures){
+    for (int i = 0; i < world->nombre_explosions; i++)
+    {
+ 
+        //Gestion du timer
+        // Cas où le timer arrive à zéro
+        if (world->explosions[i].frameTimer <= 0)
+        {
+            //Réinitialisation du timer
+            world->explosions[i].frameTimer = TIME_BETWEEN_2_FRAMES_PLAYER;
+ 
+            //Passage à la frame suivante
+            world->explosions[i].frameNumber++;
+ 
+            //Efface l'explosion si on dépasse la dernière frame (animation terminée)
+            int w;
+            SDL_QueryTexture(textures->explosions, NULL, NULL, &w, NULL);
+            if (world->explosions[i].frameNumber >= w / world->explosions[i].w)
+            {
+                // Libère le sprite 
+                world->explosions[i] = world->explosions[world->nombre_explosions - 1];
+                world->nombre_explosions--;
+                return;
+            }
+        }
+        //Cas où le timer n'est pas encore à zéro, on le décrément
+        else
+            world->explosions[i].frameTimer--;
+
+        //Affichage de l'explosion
+        // Rectangle de destination qui contient la texture
+        SDL_Rect dest;
+ 
+        // On soustrait des coordonnées de notre héros, ceux du début de la map, pour qu'il colle
+        //au scrolling :
+        dest.x = world->explosions[i].x;
+        dest.y = world->explosions[i].y;
+        dest.w = world->explosions[i].w;
+        dest.h = world->explosions[i].h;
+ 
+        // Rectangle source
+        SDL_Rect src;
+ 
+        //Pour connaître le X de la bonne frame à dessiner, il suffit de multiplier
+        //la largeur du sprite par le numéro de la frame à afficher -> 0 = 0; 1 = 64; 2 = 128...
+        src.x = world->explosions[i].frameNumber * world->explosions[i].w;
+        src.y = 0;
+        src.w = world->explosions[i].w;
+        src.h = world->explosions[i].h;
+ 
+        // Dessine l'explosion
+        SDL_RenderCopy(renderer, textures->explosions, &src, &dest);
+    }
 }

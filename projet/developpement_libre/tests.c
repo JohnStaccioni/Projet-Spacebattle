@@ -115,8 +115,8 @@ void test_sprites_collide(){
  * @param sp2 Le sprite pour lequel on teste la collision avec le sprite sp1
  * @param sp1 Le sprite pour lequel on teste la collision avec le sprite sp2
  */
-void test_handle_sprites_collision_param(sprite_t *sp2, sprite_t *sp1){
-    handle_sprites_collision(sp2,sp1);
+void test_handle_sprites_collision_param(sprite_t *sp2, sprite_t *sp1, world_t * world){
+    handle_sprites_collision(sp2,sp1, world);
     if(sprites_collide(sp2,sp1)==1){
         printf("Les deux sprites sont entrés en collision et leur vitesse est passé à %d pour sp1 et %d pour sp2.\n", sp1->v, sp2->v);
     }
@@ -132,13 +132,14 @@ void test_handle_sprites_collision_param(sprite_t *sp2, sprite_t *sp1){
 void test_handle_sprites_collision(){
     sprite_t * vaisseau_1 = malloc(sizeof(sprite_t));
     sprite_t * vaisseau_2 = malloc(sizeof(sprite_t));
+    world_t * world;
     vaisseau_1->x = 100;
     vaisseau_1->y = 200;
     vaisseau_1->v = 5;
     vaisseau_2->x = 100;
     vaisseau_2->y = 200;
     vaisseau_2->v = 2;
-    test_handle_sprites_collision_param(vaisseau_1, vaisseau_2);
+    test_handle_sprites_collision_param(vaisseau_1, vaisseau_2, world);
     printf("\n");
     vaisseau_1->x = 100;
     vaisseau_1->y = 200;
@@ -146,7 +147,7 @@ void test_handle_sprites_collision(){
     vaisseau_2->x = 500;
     vaisseau_2->y = 300;
     vaisseau_2->v = 2;
-    test_handle_sprites_collision_param(vaisseau_1, vaisseau_2);
+    test_handle_sprites_collision_param(vaisseau_1, vaisseau_2, world);
     printf("\n");
     vaisseau_1->x = 100;
     vaisseau_1->y = 200;
@@ -154,7 +155,7 @@ void test_handle_sprites_collision(){
     vaisseau_2->x = vaisseau_1->x + SHIP_SIZE ;
     vaisseau_2->y = vaisseau_1->y + SHIP_SIZE;
     vaisseau_2->v = 2;
-    test_handle_sprites_collision_param(vaisseau_1, vaisseau_2);
+    test_handle_sprites_collision_param(vaisseau_1, vaisseau_2, world);
     printf("\n");
 }
 

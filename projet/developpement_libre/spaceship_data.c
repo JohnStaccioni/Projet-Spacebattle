@@ -8,10 +8,12 @@
  
 #include "sdl2-light.h"
 #include "spaceship_data.h"
+#include "controller.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include "audio.h"
 
 /**
  * @brief Génère un nombre aléatoire entre la borne a et b
@@ -103,7 +105,10 @@ void init_data(world_t * world){
     world->gameover = 0;
     world->compteur = 0;
     world->score = 0;
+    world->nb_vie = 3; //Initialise le nombre de vie
     world->ending = 0; //Permet d'afficher game over en cas d'appui sur ESCAPE sans terminer la partie
+    world->nombre_explosions = 0; //Initialise le nombre d'explosions à zéro, le compte et décompte est fait par la fonction apply_explosions
+    world->music_playing = 0; //Indique qu'aucune musique ne joue
     init_sprite(&(world->main_ship), (SCREEN_WIDTH/2-SHIP_SIZE/2), SCREEN_HEIGHT-3*SHIP_SIZE/2, SHIP_SIZE, SHIP_SIZE, 0);
     init_sprite(&(world->missile), SCREEN_WIDTH/2-MISSILE_SIZE/2, SCREEN_HEIGHT-1.8*SHIP_SIZE, SHIP_SIZE, SHIP_SIZE, MISSILE_SPEED);
     set_invisible(&(world->missile)); // Le missile est le seul sprite invisible en début de jeu
@@ -118,8 +123,6 @@ void clean_data(world_t *world){
     /* utile uniquement si vous avez fait de l'allocation dynamique (malloc); la fonction ici doit permettre de libérer la mémoire (free) */
     
 }
-
-
 
 /**
  * \brief La fonction indique si le jeu est fini en fonction des données du monde
@@ -190,13 +193,14 @@ int on_the_screen (sprite_t * sp){
     return 0;
 }
 
+
 /**
  * @brief Gère la collision de deux sprites, met leur vitesse à 0 et indique qu'ils sont entrés en collision dans la structure des sprites
  * 
  * @param sp2 Le sprite 2 pour lequel on change les paramètres si une collision a lieu
  * @param sp1 Le sprite 1 pour lequel on change les paramètres si une collision a lieu
  */
-void handle_sprites_collision(sprite_t *sp2, sprite_t *sp1){
+void handle_sprites_collision(sprite_t *sp2, sprite_t *sp1, world_t *world){
     //Utiliser la fonction on_the_screen permet de s'assurer que les sprites qui entrent en collisions sont bien dans le champ de l'écran
     if ((sprites_collide(sp2, sp1)==1) & (on_the_screen(sp1)==1) & (on_the_screen(sp2)==1)){
         sp2->v = 0;
@@ -205,6 +209,8 @@ void handle_sprites_collision(sprite_t *sp2, sprite_t *sp1){
         sp1->collided = 1;
         sp1->is_visible = 1;
         sp2->is_visible = 1;
+        init_explosion(sp1->x, sp1->y, world);
+        play_channel_n_sound("ressources/explosion.wav", 2); //joue le son d'une explosion sur le canal 2 en cas de collision
     }
 }
 
@@ -272,9 +278,9 @@ void update_enemies(world_t * world){
  */
 void handle_enemy_collisions(world_t * world){
     for(int i = 0; i < NB_ENEMIES; i++){
-        handle_sprites_collision(&world->main_ship, &world->enemies[i]); //Gère la collision entre l'ennemi et le vaisseau du joueur
+        handle_sprites_collision(&world->main_ship, &world->enemies[i], world); //Gère la collision entre l'ennemi et le vaisseau du joueur
         if(world->missile.is_visible==0){
-            handle_sprites_collision(&world->missile, &world->enemies[i]); //Gère la collision entre l'ennemi et le missile
+            handle_sprites_collision(&world->missile, &world->enemies[i], world); //Gère la collision entre l'ennemi et le missile
         }
     }
 }
@@ -286,8 +292,20 @@ void handle_enemy_collisions(world_t * world){
  */
 void mayday(world_t * world){
     if(world->main_ship.collided == 1){
-        world->score = 0; //on passe le score à 0
-        world->gameover = 1; // signal de fin du jeu
+        world->nb_vie--; //si le vaisseau du joueur est touché, le nombre de vies baisse de 1
+        world->main_ship.collided = 0; //on réinitialise la collision du vaisseau joueur
+        if(world->nb_vie == 2){
+            world->main_ship.main_ship_state == 2; //affichage du vaisseau du joueur au stade de dégat 2
+            world->main_ship.is_visible = 0;
+        }
+        if(world->nb_vie == 1){
+            world->main_ship.main_ship_state == 1; //affichage du vaisseau du joueur au stade de dégat 1
+            world->main_ship.is_visible = 0;
+        }
+        if(world->nb_vie == 0){
+            world->score = 0; //on passe le score à 0
+            world->gameover = 1; // signal de fin du jeu
+        }
     }
     
 }
@@ -326,8 +344,8 @@ void end_game(world_t * world){
  */
 void speed_enemies_up(world_t * world, int speed){
     for(int i = 0; i < NB_ENEMIES; i++){
-            if(world->enemies[i].collided == 0){
-                world->enemies[i].v = speed;
+            if(world->enemies[i].collided == 0){ //on augmente seulement la vitesse des ennemies qui ne sont pas entrés en collision
+                world->enemies[i].v = speed; //on affecte la vitesse speed aux ennemies non collided
             }
         }
 }
@@ -337,11 +355,14 @@ void speed_enemies_up(world_t * world, int speed){
  * @param world structure contenant les données du monde
  */
 void difficulty_up(world_t * world){
-    if(world->score == LEVEL_1){
-        speed_enemies_up(world, LEVEL_1_SPEED);
+    if(world->score == LEVEL_UP_1){
+        speed_enemies_up(world, LEVEL_UP_SPEED_1); //niveau de vitesse 1
     }
-    if(world->score == LEVEL_2){
-        speed_enemies_up(world, LEVEL_2_SPEED);
+    if(world->score == LEVEL_UP_2){
+        speed_enemies_up(world, LEVEL_UP_SPEED_2); //niveau de vitesse 2
+    }
+    if(world->score == LEVEL_UP_3){
+        speed_enemies_up(world, LEVEL_UP_SPEED_3); //niveau de vitesse 3
     }
 }
 
@@ -403,11 +424,13 @@ void handle_events(SDL_Event *event,world_t *world){
              }
 
              if((event->key.keysym.sym == SDLK_SPACE)){
-                 world->missile.missile_launch = 1; // on active le lancement du missile
+                if(world->missile.missile_launch==0){
+                    play_channel_n_sound("ressources/laser_shot.wav",1); //joue un son de laser sur le canal 1 en cas de lancer du missile
+                }
+                world->missile.missile_launch = 1; // on active le lancement du missile
              }
 
              if(event->key.keysym.sym == SDLK_ESCAPE){
-                  printf("La touche ESC est appuyée\n");
                   pause_game(world);
               }
          }
@@ -464,7 +487,7 @@ void menu_control(SDL_Event *event,world_t *world){
                 world->menu = 0;
              }
 
-             if((event->key.keysym.sym == SDLK_SPACE)){
+             if((event->key.keysym.sym == SDLK_SPACE || event->key.keysym.sym == SDLK_RETURN)){
                 world->select = 1;
              }
          }
@@ -477,12 +500,7 @@ void menu_control(SDL_Event *event,world_t *world){
  * @param world structure contenant les données du monde
  */
 void pause_game(world_t * world){
-    if(world->pause == 0){
-        world->pause = 1;
-    }
-    else{
-        world->pause = 0;
-    }
+    world->pause = !world->pause;
 }
 
 /**
@@ -509,4 +527,36 @@ void handle_pause_menu_events(SDL_Event *event,world_t *world){
               }
          }
     }
+}
+
+
+void init_explosion(int x, int y, world_t * world){
+    if (world->nombre_explosions < NB_EXPLOSIONS_MAX){ // On s'assure que le nombre d'explosions max n'est pas dépassé
+            
+        //Réinitialisation de la frame et du timer
+        world->explosions[world->nombre_explosions].frameNumber = 0;
+        world->explosions[world->nombre_explosions].frameTimer = TIME_BETWEEN_2_FRAMES_PLAYER;
+ 
+        // Initialisation des coordonnées de l'explosion
+        world->explosions[world->nombre_explosions].x = x;
+        world->explosions[world->nombre_explosions].y = y;
+ 
+        // Hauteur et largeur de l'explosion
+        world->explosions[world->nombre_explosions].w = 64;
+        world->explosions[world->nombre_explosions].h = 64;
+
+        // Ajout du comptage d'une explosion dans les données du monde
+        world->nombre_explosions++;
+    }
+}
+
+/**
+ * @brief COnvertit un int en chaine de caractère afin de permettre son affichage
+ * 
+ * @return \a char_printing contient le score en chaine de caractères 
+ */
+char* int_to_char(int a){
+    char * char_printing = malloc(sizeof(int)*NB_ENEMIES);
+    sprintf(char_printing, "%d", a);
+    return char_printing;
 }

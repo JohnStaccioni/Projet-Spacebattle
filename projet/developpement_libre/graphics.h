@@ -20,6 +20,6 @@ void  init_textures(SDL_Renderer *renderer, ressources_t *textures);
 void apply_background(SDL_Renderer *renderer, ressources_t *textures);
 void apply_sprite(SDL_Renderer *renderer, SDL_Texture *texture, sprite_t*sprite);
 void apply_enemies(SDL_Renderer *renderer, SDL_Texture *texture, world_t * world);
-char* score_to_char(int a);
+
 
 #endif

@@ -27,7 +27,7 @@ void limite_horizontale(world_t *world);
 void limite_verticale(world_t * world);
 int sprites_collide(sprite_t *sp2, sprite_t *sp1);
 int on_the_screen (sprite_t * sp);
-void handle_sprites_collision(sprite_t *sp2, sprite_t *sp1);
+void handle_sprites_collision(sprite_t *sp2, sprite_t *sp1, world_t * world);
 int collided(sprite_t *sp);
 void align_missile(sprite_t * ship, sprite_t * missile);
 void missile_launch(world_t * world);
@@ -40,6 +40,7 @@ void mayday(world_t * world);
 void perfect_score(world_t * world);
 void end_game(world_t * world);
 void compute_game(world_t * world);
+char* int_to_char(int a);
 void handle_events(SDL_Event *event,world_t *world);
 
 //Fonctions rajoutés en développement libre:
@@ -50,5 +51,7 @@ void pause_game(world_t * world);
 void handle_pause_menu_events(SDL_Event *event,world_t *world);
 void speed_enemies_up(world_t * world, int speed);
 void difficulty_up(world_t * world);
+void init_explosion(int x, int y, world_t * world);
+
 
 #endif

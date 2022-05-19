@@ -41,7 +41,7 @@
 /**
  * \brief Vitesse des vaisseaux ennemis
  */
-#define ENEMY_SPEED 2
+#define ENEMY_SPEED 1
 
 /**
  * \brief Vitesse du missile
@@ -71,24 +71,51 @@
  * @brief Score où le niveau de difficulté passe au niveau 1
  * 
  */
-#define LEVEL_1 15
+#define LEVEL_UP_1 10
 
-/**
- * @brief Score où le niveau de difficulté passe au niveau 2
- * 
- */
-#define LEVEL_2 30
 
 /**
  * @brief Vitesses des ennemies au niveau de difficulté 1
  * 
  */
-#define LEVEL_1_SPEED 3
+#define LEVEL_UP_SPEED_1 2
+
+/**
+ * @brief Score où le niveau de difficulté passe au niveau 2
+ * 
+ */
+#define LEVEL_UP_2 20
+
 
 /**
  * @brief Vitesses des ennemies au niveau de difficulté 2
  * 
  */
-#define LEVEL_2_SPEED 4
+#define LEVEL_UP_SPEED_2 3
+
+/**
+ * @brief Score où le niveau de difficulté passe au niveau 3
+ * 
+ */
+#define LEVEL_UP_3 30
+
+
+/**
+ * @brief Vitesses des ennemies au niveau de difficulté 3
+ * 
+ */
+#define LEVEL_UP_SPEED_3 4
+
+/**
+ * @brief Nombre d'explosions possibles en simultané
+ * 
+ */
+#define NB_EXPLOSIONS_MAX 10
+
+/**
+ * @brief Temps entre deux frames pour une animation
+ * 
+ */
+#define TIME_BETWEEN_2_FRAMES_PLAYER 5
 
 #endif

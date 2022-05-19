@@ -12,7 +12,8 @@
 #include "graphics.h"
 #include "controller.h"
 #include "spaceship_data.h"
-
+#include "audio.h"
+#include "SDL_mixer.h"
 
 int main( int argc, char* args[] )
 {
@@ -25,9 +26,13 @@ int main( int argc, char* args[] )
     //initialisation du jeu
     init_menu(&world);
     init(&window,&renderer,&textures,&world);
+    init_audio();
     
     //Menu du jeu
     while(is_selected(&world) == 0){
+        /*if(Mix_Playing){
+            play_music("ressources/DOOM.mp3");
+        }*/
          //gestion des évènements du menu
         menu_control(&event,&world);
 
