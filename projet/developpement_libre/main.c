@@ -13,7 +13,7 @@
 #include "controller.h"
 #include "spaceship_data.h"
 #include "audio.h"
-#include "SDL_mixer.h"
+
 
 int main( int argc, char* args[] )
 {
