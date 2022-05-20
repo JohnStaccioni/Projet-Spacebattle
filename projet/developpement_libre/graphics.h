@@ -20,6 +20,7 @@ void  init_textures(SDL_Renderer *renderer, ressources_t *textures);
 void apply_background(SDL_Renderer *renderer, ressources_t *textures);
 void apply_sprite(SDL_Renderer *renderer, SDL_Texture *texture, sprite_t*sprite);
 void apply_enemies(SDL_Renderer *renderer, SDL_Texture *texture, world_t * world);
-
+void apply_bfg(SDL_Renderer *renderer, SDL_Texture *texture, world_t * world);
+void affichage_didactitiel(SDL_Renderer *renderer,ressources_t *textures);
 
 #endif

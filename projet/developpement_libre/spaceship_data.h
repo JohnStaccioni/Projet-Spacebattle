@@ -53,5 +53,22 @@ void speed_enemies_up(world_t * world, int speed);
 void difficulty_up(world_t * world);
 void init_explosion(int x, int y, world_t * world);
 
+//Fonctions permettant l'ajout des bonus
+int lootbox_random_spawn(int chance, world_t * world);
+void handle_lootbox_pick_up(world_t * world);
+void bonus_life_up(world_t * world);
+void bonus_invicible(world_t * world);
+void bonus_speed_up(world_t * world);
+void random_bonus(world_t * world);
+void update_lootbox(world_t * world);
+void bonus_coutdown_and_reset(world_t * world);
+void bonus_bfg(world_t * world);
+void bfg_launch(world_t * world);
+void stop_bfg(world_t * world);
+void handle_BFG_collision(sprite_t * bfg, sprite_t * enemy, world_t *world);
+void lootbox_loop(world_t * world);
+
+//Fonction pour l'affichage du didacticiel
+void didacticiel_command(SDL_Event *event,world_t *world);
 
 #endif

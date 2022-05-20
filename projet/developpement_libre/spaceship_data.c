@@ -108,10 +108,18 @@ void init_data(world_t * world){
     world->nb_vie = 3; //Initialise le nombre de vie
     world->ending = 0; //Permet d'afficher game over en cas d'appui sur ESCAPE sans terminer la partie
     world->nombre_explosions = 0; //Initialise le nombre d'explosions à zéro, le compte et décompte est fait par la fonction apply_explosions
+    world->lootbox_active = 0;
+    world->invincible = 0;
+    world->speed_bonus = 0;
+    world->bonus_countdown = 0;
     world->music_playing = 0; //Indique qu'aucune musique ne joue
+    world->bfg.missile_launch = 0;
+    world->bfg_ammo = 0; //Initialisation du nombre de missile bonus
     init_sprite(&(world->main_ship), (SCREEN_WIDTH/2-SHIP_SIZE/2), SCREEN_HEIGHT-3*SHIP_SIZE/2, SHIP_SIZE, SHIP_SIZE, 0);
     init_sprite(&(world->missile), SCREEN_WIDTH/2-MISSILE_SIZE/2, SCREEN_HEIGHT-1.8*SHIP_SIZE, SHIP_SIZE, SHIP_SIZE, MISSILE_SPEED);
+    init_sprite(&(world->bfg), world->main_ship.x, world->main_ship.y , SHIP_SIZE, SHIP_SIZE, BFG_SPEED);
     set_invisible(&(world->missile)); // Le missile est le seul sprite invisible en début de jeu
+    set_invisible(&(world->bfg));
     init_enemies(world);
 }
 
@@ -210,7 +218,7 @@ void handle_sprites_collision(sprite_t *sp2, sprite_t *sp1, world_t *world){
         sp1->is_visible = 1;
         sp2->is_visible = 1;
         init_explosion(sp1->x, sp1->y, world);
-        play_channel_n_sound("ressources/explosion.wav", 2); //joue le son d'une explosion sur le canal 2 en cas de collision
+        play_channel_n_sound("ressources/explosion.wav", 1); //joue le son d'une explosion sur le canal 2 en cas de collision
     }
 }
 
@@ -282,6 +290,9 @@ void handle_enemy_collisions(world_t * world){
         if(world->missile.is_visible==0){
             handle_sprites_collision(&world->missile, &world->enemies[i], world); //Gère la collision entre l'ennemi et le missile
         }
+        if(world->bfg.is_visible==0){
+            handle_BFG_collision(&world->bfg, &world->enemies[i], world); //Gère la collision entre l'ennemi et le missile bonus
+        }
     }
 }
 
@@ -291,19 +302,26 @@ void handle_enemy_collisions(world_t * world){
  * @param world structure contenant les données du monde
  */
 void mayday(world_t * world){
-    if(world->main_ship.collided == 1){
-        world->nb_vie--; //si le vaisseau du joueur est touché, le nombre de vies baisse de 1
+    if(world->main_ship.collided == 1){ //on prends aussi en compte le cas où le vaisseau du joueur a le bonus d'invincibilité
+        if(world->invincible == 0){
+            world->nb_vie--; //si le vaisseau du joueur est touché, le nombre de vies baisse de 1
+        }
         world->main_ship.collided = 0; //on réinitialise la collision du vaisseau joueur
+        if(world->nb_vie > 0){
+            world->main_ship.is_visible = 0;
+        }
+
         if(world->nb_vie == 2){
             world->main_ship.main_ship_state == 2; //affichage du vaisseau du joueur au stade de dégat 2
             world->main_ship.is_visible = 0;
         }
+
         if(world->nb_vie == 1){
             world->main_ship.main_ship_state == 1; //affichage du vaisseau du joueur au stade de dégat 1
             world->main_ship.is_visible = 0;
         }
+
         if(world->nb_vie == 0){
-            world->score = 0; //on passe le score à 0
             world->gameover = 1; // signal de fin du jeu
         }
     }
@@ -330,7 +348,7 @@ void perfect_score(world_t * world){
  * @param world structure contenant les données du monde
  */
 void end_game(world_t * world){
-    if(world->score + world->compteur == NB_ENEMIES){ //Si le nombre d'ennemies touchés + nombre d'ennemies sorties de l'écran sont égales au nombres d'ennemies totales, alors c'est la fin du jeu
+    if(world->enemies[NB_ENEMIES-1].y == world->main_ship.y || world->enemies[NB_ENEMIES-1].collided == 1 ){ //Si le nombre d'ennemies touchés + nombre d'ennemies sorties de l'écran sont égales au nombres d'ennemies totales, alors c'est la fin du jeu
         world->gameover = 1; // signal de fin du jeu
         world->ending = 1; //scénario de fin où le joueur termine la partie sans toucher tout les ennemies
     }
@@ -361,13 +379,10 @@ void difficulty_up(world_t * world){
     if(world->score == LEVEL_UP_2){
         speed_enemies_up(world, LEVEL_UP_SPEED_2); //niveau de vitesse 2
     }
-    if(world->score == LEVEL_UP_3){
-        speed_enemies_up(world, LEVEL_UP_SPEED_3); //niveau de vitesse 3
-    }
 }
 
 /**
- * @brief Gère les différentes instances de fin de jeu
+ * @brief Gère les différentes instances d'événements du jeu
  * 
  * @param world structure contenant les données du monde
  */
@@ -375,7 +390,8 @@ void compute_game(world_t * world){
     mayday(world); // Cas où le vaisseau du joueur est touché
     perfect_score(world); // Cas où le joueur a touché tout les vaisseaux ennemies
     end_game(world); // Cas où le joueur n'a pas eu tout les ennemies mais il n'en reste plus
-    difficulty_up(world);
+    difficulty_up(world); //permet d'augmenter la difficulté en fonction du score
+    lootbox_loop(world); //permet d'ajouter des bonus dans le jeu à travers des lootbox
 }
 
 /**
@@ -388,11 +404,17 @@ void update_data(world_t *world){
         enemy_hit(world); //ajoute 1 point au score par ennemi touché
         replace_missile(world); //fonction qui remplace le missile
     }
+    if(world->bfg.missile_launch == 1){ // cas où le missile est lancé
+        bfg_launch(world); //fonction qui active le lancement du missile
+        enemy_hit(world); //ajoute 1 point au score par ennemi touché
+        stop_bfg(world); //fonction qui remplace le missile
+    }
     limite_horizontale(world);
     limite_verticale(world);
     handle_enemy_collisions(world);
     update_enemies(world);
     compute_game(world);
+    bonus_coutdown_and_reset(world); //décompte de la durée des bonus si nécessaire
 }
 
 /**
@@ -414,20 +436,37 @@ void handle_events(SDL_Event *event,world_t *world){
          //si une touche est appuyée
          if(event->type == SDL_KEYDOWN){
              if(event->key.keysym.sym == SDLK_RIGHT){
-                 world->main_ship.x += MAIN_SHIP_SPEED;
+                if(world->speed_bonus == 1){ //Cas où le joueur a ramassé le bonus de vitesse
+                    world->main_ship.x += MAIN_SHIP_SPEED_BONUS;
+                }
+                else{
+                    world->main_ship.x += MAIN_SHIP_SPEED;
+                }
                 align_missile(&(world->main_ship), &(world->missile)); //aligne le missile sur le sprite du joueur
              }
 
              if(event->key.keysym.sym == SDLK_LEFT){
-                 world->main_ship.x -= MAIN_SHIP_SPEED;
+                 if(world->speed_bonus == 1){ //Cas où le joueur a ramassé le bonus de vitesse
+                    world->main_ship.x -= MAIN_SHIP_SPEED_BONUS;
+                }
+                else{
+                    world->main_ship.x -= MAIN_SHIP_SPEED;
+                }
                  align_missile(&(world->main_ship), &(world->missile)); //aligne le missile sur le sprite du joueur
              }
 
-             if((event->key.keysym.sym == SDLK_SPACE)){
-                if(world->missile.missile_launch==0){
-                    play_channel_n_sound("ressources/laser_shot.wav",1); //joue un son de laser sur le canal 1 en cas de lancer du missile
+             if((event->key.keysym.sym == SDLK_SPACE) & (world->nb_vie != 0 )){
+                if(world->bfg_ammo == 0){
+                    play_channel_n_sound("ressources/laser_shot.wav",0); //joue un son de laser sur le canal 1 en cas de lancer du missile
+                    world->missile.missile_launch = 1; // on active le lancement du missile
                 }
-                world->missile.missile_launch = 1; // on active le lancement du missile
+                else{
+                    align_missile(&(world->main_ship), &(world->bfg)); //aligne le missile bonus sur le vaisseau du joueur
+                    play_channel_n_sound("ressources/bfg.wav",0);
+                    world->bfg.missile_launch = 1; // on active le lancement du missile bonus
+                    world->bfg_ammo--;
+                }
+                
              }
 
              if(event->key.keysym.sym == SDLK_ESCAPE){
@@ -469,22 +508,27 @@ void menu_control(SDL_Event *event,world_t *world){
     Uint8 *keystates;
     while( SDL_PollEvent( event ) ) {
         
+        
         //Si l'utilisateur a cliqué sur le X de la fenêtre
         if( event->type == SDL_QUIT ) {
             //On indique la fin du jeu
-            world->menu = 1;
+            world->menu = 2;
             world->select = 1;
         }
        
          //si une touche est appuyée
          if(event->type == SDL_KEYDOWN){
              if(event->key.keysym.sym == SDLK_DOWN){
-                world->menu = 1;
+                if(world->menu < 2){
+                    world->menu++;
+                }
 
              }
 
              if(event->key.keysym.sym == SDLK_UP){
-                world->menu = 0;
+                if(world->menu > 0 ){
+                    world->menu--;
+                }
              }
 
              if((event->key.keysym.sym == SDLK_SPACE || event->key.keysym.sym == SDLK_RETURN)){
@@ -522,14 +566,19 @@ void handle_pause_menu_events(SDL_Event *event,world_t *world){
          //si une touche est appuyée
          if(event->type == SDL_KEYDOWN){
              if(event->key.keysym.sym == SDLK_ESCAPE){
-                  printf("La touche ESC est appuyée\n");
                   pause_game(world);
               }
          }
     }
 }
 
-
+/**
+ * @brief Initialise l'explosion
+ * 
+ * @param x coordonnés x
+ * @param y coordonnés y
+ * @param world structure contenant les données du monde
+ */
 void init_explosion(int x, int y, world_t * world){
     if (world->nombre_explosions < NB_EXPLOSIONS_MAX){ // On s'assure que le nombre d'explosions max n'est pas dépassé
             
@@ -559,4 +608,257 @@ char* int_to_char(int a){
     char * char_printing = malloc(sizeof(int)*NB_ENEMIES);
     sprintf(char_printing, "%d", a);
     return char_printing;
+}
+
+
+/**
+ * @brief Fait apparaitre des bonus de manière semi aléatoire
+ * 
+ * @param chance taux de chance d'apparition d'un bonus, plus le nombre est grand et plus les chances sont basses
+ * @param world structure contenant les données du monde
+ * @return \a 1 si un bonus doit apparaitre \a 0 sinon 
+ */
+int lootbox_random_spawn(int chance, world_t * world){
+    int n = generate_number(0, chance);
+    if (n == 5){ //si on tombe sur 5, alors on indique qu'une lootbox va être créée
+        return 1;
+    }
+
+    return 0;
+}
+
+/**
+ * @brief Permet de gérer les collisions entre le vaisseau du joueur et les lootbox
+ * 
+ * @param main_ship vaisseau du joueur
+ * @param lootbox lootbox qui donnent les bonus
+ * @param world structure contenant les données du monde
+ */
+void handle_lootbox_collision(sprite_t * main_ship, sprite_t * lootbox, world_t *world){
+    //Utiliser la fonction on_the_screen permet de s'assurer que les sprites qui entrent en collisions sont bien dans le champ de l'écran
+    if ((sprites_collide(main_ship, lootbox)==1) & (on_the_screen(lootbox)==1) & (on_the_screen(main_ship)==1)){
+        lootbox->v = 0;
+        lootbox->collided = 1;
+        play_channel_n_sound("ressources/coin.wav", 2);
+        lootbox->is_visible = 1;
+    }
+}
+
+/**
+ * @brief Permet d'indiquer si une lootbox a été ramassée
+ * 
+ * @param world structure contenant les données du monde
+ */
+void handle_lootbox_pick_up(world_t * world){
+    handle_lootbox_collision(&world->main_ship, &world->lootbox, world);
+    if(world->lootbox.collided == 1){
+        world->lootbox_active = 0;
+    }
+
+    if(world->lootbox.y > SCREEN_HEIGHT){
+        world->lootbox_active = 0;
+    }
+}
+
+/**
+ * @brief bonus qui donne au joueur une vie supplémentaire
+ * 
+ * @param world structure contenant les données du monde
+ */
+void bonus_life_up(world_t * world){
+    world->lootbox_active = 0;
+    world->lootbox.collided = 0;
+    if(world->nb_vie == NB_VIES_MAX){ //On ne souhaite pas que le joueur ait plus de NB_VIES_MAX 
+        world->speed_bonus = 0; //Dans le cas où le joueur avait un bonus de vitesse
+        world->invincible = 1;
+    }
+    else{
+        world->nb_vie++;
+    }
+}
+
+/**
+ * @brief bonus qui rends le joueur invincible
+ * 
+ * @param world structure contenant les données du monde
+ */
+void bonus_invincible(world_t * world){
+    world->lootbox_active = 0;
+    world->lootbox.collided = 0;
+    world->speed_bonus = 0; //annule le bonus de vitesse dans le cas où il avait été attrapé par le joueur
+    world->invincible = 1;
+    world->bonus_countdown = DUREE_BONUS;
+}
+
+/**
+ * @brief donne au joueur un bonus de vitesse
+ * 
+ * @param world structure contenant les données du monde
+ */
+void bonus_speed_up(world_t * world){
+    world->lootbox_active = 0;
+    world->lootbox.collided = 0;
+    world->invincible = 0; //annule le bonus d'invincibilité dans le cas où il avait été attrapé par le joueur
+    world->speed_bonus = 1;
+    world->bonus_countdown = DUREE_BONUS;
+}
+
+/**
+ * @brief permet de donner un bonus de manière aléatoire au joueur
+ * 
+ * @param world structure contenant les données du monde
+ */
+void random_bonus(world_t * world){
+    srand ( time (NULL) ) ;
+    if(world->lootbox.collided == 1){
+        int bonus = generate_number(0,4);
+        if(bonus == 0){
+            bonus_life_up(world);
+        }
+        if(bonus == 1){
+            bonus_invincible(world);
+        }
+        if(bonus == 2){
+            bonus_bfg(world);
+        }
+        if(bonus == 3){
+            bonus_speed_up(world);
+        }
+    }
+}
+
+/**
+ * @brief permet de faire avancer les lootboxs dans le jeu
+ * 
+ * @param world structure contenant les données du monde
+ */
+void update_lootbox(world_t * world){
+    world->lootbox.y += world->lootbox.v;
+}
+
+/**
+ * @brief permet de gérer le décompte de durée des bonus invincibilité ou de vitesse
+ * 
+ * @param world structure contenant les données du monde
+ */
+void bonus_coutdown_and_reset(world_t * world){
+    if(world->bonus_countdown > 0){
+        world->bonus_countdown--;
+    }
+    else{
+        world->invincible = 0;
+        world->speed_bonus = 0;
+    }
+}
+
+/**
+ * @brief donne au joueur un missile plus puissant (missile bfg)
+ * 
+ * @param world structure contenant les données du monde
+ */
+void bonus_bfg(world_t * world){
+    if(world->bfg_ammo < NB_BFG_AMMO_MAX){
+        world->lootbox_active = 0;
+        world->lootbox.collided = 0;
+        world->bfg_ammo++;
+        init_sprite(&(world->bfg), world->main_ship.x, world->main_ship.y, SHIP_SIZE, SHIP_SIZE, BFG_SPEED);
+        world->bfg.missile_launch = 0;
+        world->bfg.is_visible = 1;
+    }
+    else{
+        bonus_life_up(world);
+    }
+}
+
+
+/**
+ * @brief indique que le bfg (missile plus puissant) est lancé
+ * 
+ * @param world structure contenant les données du monde
+ */
+void bfg_launch(world_t * world){
+    world->bfg.is_visible = 0; //rends le missile bonus visible
+    world->bfg.y -= world->bfg.v;
+}
+
+/**
+ * @brief stop le missile bonus après sa sortie de l'écran et réinitialise son état de lancement
+ * 
+ * @param world structure contenant les données du monde
+ */
+void stop_bfg(world_t * world){
+    if(world->bfg_ammo > 0){
+        if(world->bfg.y < -32){ //si sortie de la limite verticale haute, le missile bonus est arrêté
+            world->bfg.v = 0;
+            world->bfg.missile_launch = 0;
+        }
+    }
+}
+
+/**
+ * @brief gère les collisions entre le missile bonus et les ennemies
+ * 
+ * @param bfg missile bonus
+ * @param enemy ennemies dont on vérifie la collision avec le missile bonus
+ * @param world structure contenant les données du monde
+ */
+void handle_BFG_collision(sprite_t * bfg, sprite_t * enemy, world_t *world){
+    //Utiliser la fonction on_the_screen permet de s'assurer que les sprites qui entrent en collisions sont bien dans le champ de l'écran
+    if ((sprites_collide(bfg, enemy)==1) & (on_the_screen(bfg)==1) & (on_the_screen(enemy)==1)){
+        enemy->v = 0;
+        enemy->collided = 1;
+        enemy->is_visible = 1;
+        world->score++;
+        init_explosion(bfg->x, enemy->y, world);
+        play_channel_n_sound("ressources/explosion.wav", 1); //joue le son d'une explosion sur le canal 2 en cas de collision
+    }
+}
+
+
+/**
+ * @brief boucle qui permet de gérer l'apparition et la récupération des lootbox
+ * 
+ * @param world structure contenant les données du monde
+ */
+void lootbox_loop(world_t * world){
+    if(world->lootbox_active == 0){ //On ne fait pas apparaitre de lootbox s'il y en a déjà une
+        int n = lootbox_random_spawn(RANDOM_SPAWN_CHANCE, world);
+        if (n == 1 ){ //Si la fonction renvoie 1, alors on créé une lootbox
+            world->lootbox_active = 1;
+            init_sprite(&(world->lootbox), generate_number(0, SCREEN_WIDTH - SHIP_SIZE / 2 ), -SHIP_SIZE, SHIP_SIZE, SHIP_SIZE, ENEMY_SPEED); //place la lootbox de manière semi-aléatoire sur l'axe x
+        }
+    }
+    if (world->lootbox_active == 1){ //Cas où une lootbox est active
+        update_lootbox(world); //mouvement de la lootbox
+        handle_lootbox_pick_up(world); //vérifie si le joueur a ramassé la lootbox
+    }
+    if(world->lootbox.collided == 1){
+        random_bonus(world); //donne au joueur un bonus aléatoire
+    }    
+}
+
+/**
+ * @brief Permet de gérer les évenements du didacticiel
+ * 
+ * @param event paramètre qui contient les événements
+ * @param world structure contenant les données du monde
+ */
+void didacticiel_command(SDL_Event *event,world_t *world){
+    Uint8 *keystates;
+    while( SDL_PollEvent( event ) ) {
+        
+        //Si l'utilisateur a cliqué sur le X de la fenêtre
+        if( event->type == SDL_QUIT ) {
+            //On indique la fin du jeu
+            world->menu = 1;
+            world->select = 1;
+        }
+       
+         //si une touche est appuyée, menu prends la valeur 0 et le jeu va se lancer
+         if(event->type == SDL_KEYDOWN){
+             if((event->key.keysym.sym == SDLK_SPACE || event->key.keysym.sym == SDLK_RETURN)){
+                world->menu = 0;
+             }
+         }
+    }
 }

@@ -16,10 +16,11 @@
  */
 void init_audio(){
     Mix_OpenAudio(41000,MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024);
-    Mix_AllocateChannels(3);
+    Mix_AllocateChannels(4);
+    Mix_Volume(0,128);
     Mix_Volume(1,128);
     Mix_Volume(2,128);
-    Mix_Volume(3,128);
+    Mix_Volume(3,80);
 }
 
 /**
@@ -29,8 +30,8 @@ void init_audio(){
  * @param n le canal sur lequel jouer le son
  */
 void play_channel_n_sound(const char * path, int n){
-    Mix_Chunk* music = Mix_LoadWAV(path);
-    Mix_PlayChannel(n,music, 0);
+    Mix_Chunk* sound = Mix_LoadWAV(path);
+    Mix_PlayChannel(n,sound, 0);
 }
 
 /**

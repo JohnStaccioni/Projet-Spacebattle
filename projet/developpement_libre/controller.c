@@ -23,12 +23,18 @@
 void print_ending(SDL_Renderer *renderer, world_t *world,ressources_t *textures){
     if(world->ending == 0){ // Cas où le joueur perds
         apply_text(renderer, 50, 200, 200, 100,"GAME OVER!",textures->police);
+        apply_text(renderer, 50, 300, 100, 50,"SCORE :",textures->police);
+        apply_text(renderer, 160, 300, 50, 50,int_to_char(world->score),textures->police);
     }
     if(world->ending == 1){ //Cas où le joueur termine sans toucher tout les ennemies
         apply_text(renderer, 50, 200, 200, 100,"YOU SURVIVED!",textures->police);
+        apply_text(renderer, 50, 300, 100, 50,"SCORE :",textures->police);
+        apply_text(renderer, 160, 300, 50, 50,int_to_char(world->score),textures->police);
     }
     if(world->ending == 2){ //Cas où le joueur touche tout les ennemies
         apply_text(renderer, 50, 200, 200, 100,"CONGRATULATIONS!",textures->police);
+        apply_text(renderer, 50, 300, 100, 50,"SCORE :",textures->police);
+        apply_text(renderer, 160, 300, 50, 50,int_to_char(world->score),textures->police);
     }
 }
 
@@ -47,22 +53,54 @@ void refresh_graphics(SDL_Renderer *renderer, world_t *world,ressources_t *textu
     
     //application des textures dans le renderer
     apply_background(renderer, textures);
-    if(world->nb_vie > 2){ //affichage du vaisseau du joueur en état intact
-        apply_sprite(renderer, textures->main_ship_state3, &(world->main_ship));
+
+    
+    //Affichage du vaisseau du joueur avec gestion des différents scénarios
+    //if(world->invincible == 0){
+        if(world->nb_vie > 2){ //affichage du vaisseau du joueur en état intact
+            apply_sprite(renderer, textures->main_ship_state3, &(world->main_ship));
+            apply_texture(textures->troies_vies, renderer, SCREEN_WIDTH -20 , 240);
+        }
+
+        if(world->nb_vie==2){ //affichage du vaisseau du joueur en état de dégradation 
+            apply_sprite(renderer, textures->main_ship_state2, &(world->main_ship));
+            apply_texture(textures->deux_vies, renderer, SCREEN_WIDTH -20 , 240);
+        }
+
+        if(world->nb_vie==1){ //affichage du vaisseau du joueur en état de dégradation final
+            apply_sprite(renderer, textures->main_ship_state1, &(world->main_ship));
+            apply_texture(textures->une_vie, renderer, SCREEN_WIDTH -20 , 240);
+        }
+    //}
+
+    //Affichage des bonus du vaisseau joueur
+    if(world->speed_bonus==1){
+        apply_sprite(renderer, textures->speed_up, &(world->main_ship));
+        apply_texture(textures->speed_up_logo, renderer,SCREEN_WIDTH -20 , 290);
     }
-    if(world->nb_vie==2){ //affichage du vaisseau du joueur en état de dégradation 
-        apply_sprite(renderer, textures->main_ship_state2, &(world->main_ship));
+    if(world->invincible == 1){
+        apply_sprite(renderer, textures->invincible, &(world->main_ship));
     }
-    if(world->nb_vie==1){ //affichage du vaisseau du joueur en état de dégradation final
-        apply_sprite(renderer, textures->main_ship_state1, &(world->main_ship));
+    if(world->bfg_ammo > 0){
+        apply_texture(textures->bfg_logo, renderer, SCREEN_WIDTH -20 , 306);
     }
+
+
+    //Affichage des lootbox
+    if(world->lootbox_active == 1){
+        apply_sprite(renderer, textures->lootbox, &(world->lootbox));
+    }
+
+    //Affichage des ennemies
     apply_enemies(renderer, textures->enemy_ship, world);
+
+    //Affichage des missiles
     apply_sprite(renderer, textures->missile, &(world->missile));
+    apply_sprite(renderer, textures->bfg, &(world->bfg));
 
     //Affichage du score et du nombre de vie
     if(!is_game_over(world)){
-        apply_text(renderer, SCREEN_WIDTH - 30, 0, 32, 32,int_to_char(world->score),textures->police); //affichage du score
-        apply_text(renderer, 5 , 0, 32, 32,int_to_char(world->nb_vie),textures->police);
+        apply_text(renderer, 5, 0, 32, 32,int_to_char(world->score),textures->police); //affichage du score
     }
     
     else{
@@ -111,10 +149,13 @@ void init(SDL_Window **window, SDL_Renderer ** renderer, ressources_t *textures,
  */
 void apply_selection_background(ressources_t *texture,SDL_Renderer *renderer, world_t * world){
     if(world->menu == 0){
-        apply_texture(texture->selection_background, renderer, 40, 160);
+        apply_texture(texture->selection_background, renderer, 40, 175);
     }
     if(world->menu == 1){
-        apply_texture(texture->selection_background, renderer, 40, 260);
+        apply_texture(texture->selection_background, renderer, 40, 250);
+    }
+    if(world->menu == 2){
+        apply_texture(texture->selection_background, renderer, 40, 330);
     }
 }
 
@@ -135,8 +176,11 @@ void refresh_menu_graphics(SDL_Renderer *renderer, world_t *world,ressources_t *
 
     //Affichage des choix du menu
     apply_selection_background(textures,renderer, world);
-    apply_text(renderer, 50, 150, 200, 100,"PLAY",textures->police);
-    apply_text(renderer, 50, 250, 200, 100,"EXIT",textures->police);
+    //apply_texture(textures->logo_jeu, renderer, 5, 50);
+    apply_text(renderer, 0, 50, 300, 150,"SPACEBATTLE",textures->title_police); //Affichage du titre du jeu
+    apply_text(renderer, 50, 175, 100, 50,"PLAY",textures->police); //Option de jouer du menu
+    apply_text(renderer, 50, 250, 200, 50,"DIDACTICIEL",textures->police); //Option pour voir le didacticiel
+    apply_text(renderer, 50, 330, 100, 50,"EXIT",textures->police); //Permet de quitter le jeu à l'écran de départ
 
     // on met à jour l'écran
     update_screen(renderer);
@@ -153,12 +197,12 @@ void refresh_pause_graphics(SDL_Renderer *renderer, world_t *world,ressources_t 
     //on vide le renderer
     clear_renderer(renderer);
     
-    //application des textures dans le renderer
+    //application du background
     apply_background(renderer, textures);
 
     //Affichage des choix du menu
     apply_selection_background(textures,renderer, world);
-    apply_text(renderer, 50, 150, 200, 100,"PAUSE",textures->police);
+    apply_text(renderer, 50, 150, 200, 100,"PAUSE",textures->police); //Affiche un message qui indique que le jeu est en pause
 
     // on met à jour l'écran
     update_screen(renderer);

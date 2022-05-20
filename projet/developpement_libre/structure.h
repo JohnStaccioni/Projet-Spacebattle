@@ -18,15 +18,36 @@
 */
 
 struct ressources_s{
+    SDL_Texture* logo_jeu; /*!< Texture liée au logo du jeu */
+
     SDL_Texture* background; /*!< Texture liée à l'image du fond de l'écran. */
     SDL_Texture* selection_background; /*! Texture liée à l'image en arrière plan de la sélection du joueur dans le menu */
+    SDL_Texture* didacticiel; /*!< Texture liée à l'image du didacticiel. */
+
+    //Textures liées au vaisseau du joueur
     SDL_Texture* main_ship_state3; /*!< Texture liée au vaisseau du joueur. */
     SDL_Texture* main_ship_state2; /*!< Texture liée au vaisseau du joueur. */
     SDL_Texture* main_ship_state1; /*!< Texture liée au vaisseau du joueur. */
+    SDL_Texture* invincible; /*!< Texture liée au vaisseau du joueur lorsqu'il est invincible. */
+    SDL_Texture* speed_up; /*!< Texture liée au vaisseau du joueur lorsqu'il a le bonus de vitesse. */
+
     SDL_Texture* enemy_ship; /*!< Texture liée au vaisseau ennemi. */
+
     SDL_Texture* missile; /*!< missile du joueur */
+
+    //Textures liées au bonus
+    SDL_Texture* bfg; /*!< missile bonus */
+    SDL_Texture* bfg_logo; /*!< logo qui indique que le joueur détient un missile bonus */
+    SDL_Texture* speed_up_logo; /*!< logo qui indique que le joueur détient le bonus d'accéleration*/
+    SDL_Texture* troies_vies; /*!< logo pour troies vies*/
+    SDL_Texture* deux_vies; /*!< logo pour deux vies */
+    SDL_Texture* une_vie; /*!< logo pour une vie */
+
+
+    TTF_Font* title_police; /*!< police utilisée pour les titres dans le jeu */
     TTF_Font* police; /*!< police utilisée pour les affichages dans le jeu */
     SDL_Texture* explosions; /*!< Texture liée aux explosions */
+    SDL_Texture* lootbox; /*!< Texture liée aux lootbox */
 };
 
 /**
@@ -66,7 +87,6 @@ typedef struct sprite_s sprite_t;
 struct animation_s{
     int frameNumber; /*!< Champ indiquant le nombre de frame par bmp pour l'animation*/
     int frameTimer; /*!< Temps entre deux frame */
-    //sprite_t * animation_sprite; /*!< sprite qui contient les informations de l'animation */
     int x; /*!< abscisse du centre du vaisseau */
     int y; /*!< ordonné du centre du vaisseau */
     int w; /*!<largeur du sprite */
@@ -88,12 +108,20 @@ struct world_s{
     int nb_vie; /*!< Nombre de vie du joueur*/
     sprite_t main_ship; /*!< Vaisseau du joueur */
     sprite_t missile; /*!< Missile */
+    sprite_t bfg; /*!< Missile bonus avec un plus gros champ d'actions*/
     sprite_t * enemies; /*!< Vaisseaux ennemis */
+    sprite_t lootbox; /*!< Permet l'ajout de lootbox qui donnent des bonus si le joueur les ramasse */
     int compteur; /*!< Compteur du nombre de vaisseaux sortis de l'écran */
     int score; /*!< Score du joueur */
     int ending; /*!< Permet d'indiquer le type de fin de jeu */
     animation_t explosions[NB_EXPLOSIONS_MAX]; /*!< Permet d'inclure des effets d'explosions */
     int nombre_explosions; /*!< Nombre d'effets d'explosions en cours */
+    int lootbox_active; /*!< Permet de définir si une lootbox est active */
+    int invincible; /*!< Permet de gérer l'état d'invincibilité du vaisseau du joueur*/
+    int speed_bonus; /*!< Permet de gérer le bonus d'augmentation de vitesse du vaisseau du joueur*/
+    int bfg_ammo;
+    
+    int bonus_countdown; /*!< Permet de compter le temps d'un bonus*/
 };
 
 /**

@@ -33,6 +33,12 @@
 #define MAIN_SHIP_SPEED 8
 
 /**
+ * @brief Vitesse horizontale du joueur
+ * 
+ */
+#define MAIN_SHIP_SPEED_BONUS 14
+
+/**
  * \brief Taille du missile
 */
 
@@ -52,7 +58,7 @@
  * @brief Nombre d'ennemies
  * 
  */
-#define NB_ENEMIES 999
+#define NB_ENEMIES 500
 
 
 /**
@@ -93,18 +99,6 @@
  */
 #define LEVEL_UP_SPEED_2 3
 
-/**
- * @brief Score où le niveau de difficulté passe au niveau 3
- * 
- */
-#define LEVEL_UP_3 30
-
-
-/**
- * @brief Vitesses des ennemies au niveau de difficulté 3
- * 
- */
-#define LEVEL_UP_SPEED_3 4
 
 /**
  * @brief Nombre d'explosions possibles en simultané
@@ -117,5 +111,37 @@
  * 
  */
 #define TIME_BETWEEN_2_FRAMES_PLAYER 5
+
+/**
+ * @brief Correspond à 1 sur la chance d'apparition d'un bonus par séquence de rafraichissement
+ * 
+ */
+#define RANDOM_SPAWN_CHANCE 100
+
+
+/**
+ * @brief Temps du bonus invicibilité
+ * 
+ */
+#define DUREE_BONUS 500
+
+/**
+ * @brief Permet de définir un nombre de vie maximum que le joueur peut acquérir
+ * 
+ */
+#define NB_VIES_MAX 3
+
+/**
+ * @brief Permet de définir le nombre de munitions du missile bonus (plus gros missile)
+ * 
+ */
+#define NB_BFG_AMMO_MAX 1
+
+
+/**
+ * @brief Vitesse du missile bonus
+ * 
+ */
+#define BFG_SPEED 2
 
 #endif

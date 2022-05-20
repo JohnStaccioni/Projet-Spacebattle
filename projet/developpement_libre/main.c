@@ -30,9 +30,10 @@ int main( int argc, char* args[] )
     
     //Menu du jeu
     while(is_selected(&world) == 0){
-        /*if(Mix_Playing){
-            play_music("ressources/DOOM.mp3");
-        }*/
+        if(world.music_playing == 0){ //Si aucune musique ne joue, alors on joue le thème du menu, permet d'éviter que la musique boucle
+            play_music("ressources/menu_theme.wav");
+            world.music_playing = 1;
+        }
          //gestion des évènements du menu
         menu_control(&event,&world);
 
@@ -42,11 +43,26 @@ int main( int argc, char* args[] )
         // pause de 10 ms pour controler la vitesse de rafraichissement
         pause(10);
     }
+    
+    //affichage du didactitiel
+    while(world.menu == 1){
+          //gestion des évènements du didactitiel
+        didacticiel_command(&event,&world);
 
+        //rafraichissement de l'écran
+        affichage_didactitiel(renderer, &textures);
+        
+        // pause de 10 ms pour controler la vitesse de rafraichissement
+        pause(10);
+    }
     //Jeu en cours
     if(world.menu == 0){
+        world.music_playing = 0; //remise à zéro de la musique
         while(!is_game_over(&world)){ //tant que le jeu n'est pas fini
-        
+        if(world.music_playing == 0){//Si aucune musique ne joue, alors on joue le thème du jeu, permet d'éviter que la musique boucle
+            play_music("ressources/gameplay_theme.mp3");
+            world.music_playing = 1;
+        }
             //gestion des évènements
             handle_events(&event,&world);
         
