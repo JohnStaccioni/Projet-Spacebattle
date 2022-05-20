@@ -668,13 +668,7 @@ void handle_lootbox_pick_up(world_t * world){
 void bonus_life_up(world_t * world){
     world->lootbox_active = 0;
     world->lootbox.collided = 0;
-    if(world->nb_vie == NB_VIES_MAX){ //On ne souhaite pas que le joueur ait plus de NB_VIES_MAX 
-        world->speed_bonus = 0; //Dans le cas où le joueur avait un bonus de vitesse
-        world->invincible = 1;
-    }
-    else{
-        world->nb_vie++;
-    }
+    world->nb_vie++;
 }
 
 /**
@@ -713,7 +707,12 @@ void random_bonus(world_t * world){
     if(world->lootbox.collided == 1){
         int bonus = generate_number(0,4);
         if(bonus == 0){
-            bonus_life_up(world);
+            if(world->nb_vie < NB_VIES_MAX){ //On ne donne des vies au joueur que s'il n'en a pas le maximum
+                bonus_life_up(world);
+            }
+            else{
+                bonus_invincible(world);
+            }
         }
         if(bonus == 1){
             bonus_invincible(world);

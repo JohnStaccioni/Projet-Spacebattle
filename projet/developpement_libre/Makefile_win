@@ -1,28 +1,17 @@
 CFLAGS =  -O3 -Dmain=SDL_main
-LDFLAGS = -lm -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_mixer -lm
-SDL2_INCLUDE_DIR = "..\..\..\SDL2-2.0.20\x86_64-w64-mingw32\include"
-SDL2_LIBRARIES_DIR = "..\..\..\SDL2-2.0.20\x86_64-w64-mingw32\lib"
+LDFLAGS = -lm -lmingw32 -lSDL2main -lSDL2
+SDL2_INCLUDE_DIR = C:\SDL2-2.0.12\x86_64-w64-mingw32\include
+SDL2_LIBRARIES_DIR = C:\SDL2-2.0.12\x86_64-w64-mingw32\lib
 
-
-
-INC = sdl2-light.h graphics.h spaceship_data.h structure.h constante.h sdl2-ttf-light.h controller.h audio.h
-SRC = main.c sdl2-light.c graphics.c spaceship_data.c sdl2-ttf-light.c controller.c audio.c
+INC = sdl2-light.h
+SRC = main.c sdl2-light.c
 OBJ = $(SRC:%.c=%.o)
 
-TEST_INC = spaceship_data.h structure.h constante.h
-TEST_SRC = tests.c spaceship_data.c
-TEST_OBJ = $(TEST_SRC:%.c=%.o)
-
 PROG = spacebattle.exe
-PROG_test = spacebattle_test.exe
-DEFAULT:spacebattle.exe 
 
 %.o: %.c $(INC)
 	gcc $(CFLAGS) -c $<  -I $(SDL2_INCLUDE_DIR)
 
-$(PROG_test): $(TEST_OBJ)
-	gcc $(CFLAGS) $(TEST_OBJ) $(LDFLAGS) -o $@ -L $(SDL2_LIBRARIES_DIR)
-	
 $(PROG): $(OBJ)
 	gcc $(CFLAGS) $(OBJ) $(LDFLAGS) -o $@ -L $(SDL2_LIBRARIES_DIR)
 
@@ -31,5 +20,5 @@ doc: $(PROG)
 
 .PHONY: clean
 clean:
-	del /S *.O
-
+	del /f /q *.o *~ $(PROG)
+	rd /s /q latex html
